@@ -1,0 +1,6 @@
+﻿pyiapws95.wagner.saturated\_vapour\_density
+===========================================
+
+.. currentmodule:: pyiapws95.wagner
+
+.. autofunction:: saturated_vapour_density

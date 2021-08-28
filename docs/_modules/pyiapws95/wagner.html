@@ -1,0 +1,940 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>pyiapws95.wagner &mdash; pyiapws95 0.1 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> pyiapws95
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../whats-new.html">What’s New</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">pyiapws95</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+          <li><a href="../pyiapws95.html">pyiapws95</a> &raquo;</li>
+        
+      <li>pyiapws95.wagner</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for pyiapws95.wagner</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Water properties from  Wagner und Pruss 2002 paper.</span>
+<span class="c1"># Inspired by Fluidika.</span>
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="c1"># raise ImportError</span>
+    <span class="kn">from</span> <span class="nn">numba</span> <span class="kn">import</span> <span class="n">njit</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">njit</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span>
+
+<span class="c1"># Formulas 6.1 - 6.3</span>
+<span class="n">T_c</span> <span class="o">=</span> <span class="mf">647.096</span>  <span class="c1"># [K]</span>
+<span class="n">p_c</span> <span class="o">=</span> <span class="mf">2.2064e7</span>  <span class="c1"># [Pa]</span>
+<span class="n">rho_c</span> <span class="o">=</span> <span class="mf">322.0</span>  <span class="c1"># [kg m^-3]</span>
+<span class="n">R</span> <span class="o">=</span> <span class="mf">4.6151805e2</span>  <span class="c1"># [J kg^-1 K^-1]</span>
+
+<span class="c1"># Table 6.1</span>
+<span class="n">no</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="mi">0</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">8.32044648201</span><span class="p">,</span>
+        <span class="mf">6.6832105268</span><span class="p">,</span>
+        <span class="mf">3.00632</span><span class="p">,</span>
+        <span class="mf">0.012436</span><span class="p">,</span>
+        <span class="mf">0.97315</span><span class="p">,</span>
+        <span class="mf">1.27950</span><span class="p">,</span>
+        <span class="mf">0.96956</span><span class="p">,</span>
+        <span class="mf">0.24873</span><span class="p">,</span>
+    <span class="p">]</span>
+<span class="p">)</span>
+<span class="n">gammao</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.28728967</span><span class="p">,</span> <span class="mf">3.53734222</span><span class="p">,</span> <span class="mf">7.74073708</span><span class="p">,</span> <span class="mf">9.24437796</span><span class="p">,</span> <span class="mf">27.5075105</span><span class="p">])</span>
+
+
+<span class="c1"># Table 6.2</span>
+<span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="mi">0</span><span class="p">,</span>
+        <span class="mi">0</span><span class="p">,</span>
+        <span class="mi">0</span><span class="p">,</span>
+        <span class="mi">0</span><span class="p">,</span>
+        <span class="mi">0</span><span class="p">,</span>
+        <span class="mi">0</span><span class="p">,</span>
+        <span class="mi">0</span><span class="p">,</span>
+        <span class="mi">0</span><span class="p">,</span>
+        <span class="mi">1</span><span class="p">,</span>
+        <span class="mi">1</span><span class="p">,</span>
+        <span class="mi">1</span><span class="p">,</span>
+        <span class="mi">1</span><span class="p">,</span>
+        <span class="mi">1</span><span class="p">,</span>
+        <span class="mi">1</span><span class="p">,</span>
+        <span class="mi">1</span><span class="p">,</span>
+        <span class="mi">1</span><span class="p">,</span>
+        <span class="mi">1</span><span class="p">,</span>
+        <span class="mi">1</span><span class="p">,</span>
+        <span class="mi">1</span><span class="p">,</span>
+        <span class="mi">1</span><span class="p">,</span>
+        <span class="mi">1</span><span class="p">,</span>
+        <span class="mi">1</span><span class="p">,</span>
+        <span class="mi">1</span><span class="p">,</span>
+        <span class="mi">2</span><span class="p">,</span>
+        <span class="mi">2</span><span class="p">,</span>
+        <span class="mi">2</span><span class="p">,</span>
+        <span class="mi">2</span><span class="p">,</span>
+        <span class="mi">2</span><span class="p">,</span>
+        <span class="mi">2</span><span class="p">,</span>
+        <span class="mi">2</span><span class="p">,</span>
+        <span class="mi">2</span><span class="p">,</span>
+        <span class="mi">2</span><span class="p">,</span>
+        <span class="mi">2</span><span class="p">,</span>
+        <span class="mi">2</span><span class="p">,</span>
+        <span class="mi">2</span><span class="p">,</span>
+        <span class="mi">2</span><span class="p">,</span>
+        <span class="mi">2</span><span class="p">,</span>
+        <span class="mi">2</span><span class="p">,</span>
+        <span class="mi">2</span><span class="p">,</span>
+        <span class="mi">2</span><span class="p">,</span>
+        <span class="mi">2</span><span class="p">,</span>
+        <span class="mi">2</span><span class="p">,</span>
+        <span class="mi">2</span><span class="p">,</span>
+        <span class="mi">3</span><span class="p">,</span>
+        <span class="mi">3</span><span class="p">,</span>
+        <span class="mi">3</span><span class="p">,</span>
+        <span class="mi">3</span><span class="p">,</span>
+        <span class="mi">4</span><span class="p">,</span>
+        <span class="mi">6</span><span class="p">,</span>
+        <span class="mi">6</span><span class="p">,</span>
+        <span class="mi">6</span><span class="p">,</span>
+        <span class="mi">6</span><span class="p">,</span>
+        <span class="mi">0</span><span class="p">,</span>
+        <span class="mi">0</span><span class="p">,</span>
+        <span class="mi">0</span><span class="p">,</span>
+    <span class="p">]</span>
+<span class="p">)</span>
+
+<span class="n">d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="mi">0</span><span class="p">,</span>
+        <span class="mi">1</span><span class="p">,</span>
+        <span class="mi">1</span><span class="p">,</span>
+        <span class="mi">1</span><span class="p">,</span>
+        <span class="mi">2</span><span class="p">,</span>
+        <span class="mi">2</span><span class="p">,</span>
+        <span class="mi">3</span><span class="p">,</span>
+        <span class="mi">4</span><span class="p">,</span>
+        <span class="mi">1</span><span class="p">,</span>
+        <span class="mi">1</span><span class="p">,</span>
+        <span class="mi">1</span><span class="p">,</span>
+        <span class="mi">2</span><span class="p">,</span>
+        <span class="mi">2</span><span class="p">,</span>
+        <span class="mi">3</span><span class="p">,</span>
+        <span class="mi">4</span><span class="p">,</span>
+        <span class="mi">4</span><span class="p">,</span>
+        <span class="mi">5</span><span class="p">,</span>
+        <span class="mi">7</span><span class="p">,</span>
+        <span class="mi">9</span><span class="p">,</span>
+        <span class="mi">10</span><span class="p">,</span>
+        <span class="mi">11</span><span class="p">,</span>
+        <span class="mi">13</span><span class="p">,</span>
+        <span class="mi">15</span><span class="p">,</span>
+        <span class="mi">1</span><span class="p">,</span>
+        <span class="mi">2</span><span class="p">,</span>
+        <span class="mi">2</span><span class="p">,</span>
+        <span class="mi">2</span><span class="p">,</span>
+        <span class="mi">3</span><span class="p">,</span>
+        <span class="mi">4</span><span class="p">,</span>
+        <span class="mi">4</span><span class="p">,</span>
+        <span class="mi">4</span><span class="p">,</span>
+        <span class="mi">5</span><span class="p">,</span>
+        <span class="mi">6</span><span class="p">,</span>
+        <span class="mi">6</span><span class="p">,</span>
+        <span class="mi">7</span><span class="p">,</span>
+        <span class="mi">9</span><span class="p">,</span>
+        <span class="mi">9</span><span class="p">,</span>
+        <span class="mi">9</span><span class="p">,</span>
+        <span class="mi">9</span><span class="p">,</span>
+        <span class="mi">9</span><span class="p">,</span>
+        <span class="mi">10</span><span class="p">,</span>
+        <span class="mi">10</span><span class="p">,</span>
+        <span class="mi">12</span><span class="p">,</span>
+        <span class="mi">3</span><span class="p">,</span>
+        <span class="mi">4</span><span class="p">,</span>
+        <span class="mi">4</span><span class="p">,</span>
+        <span class="mi">5</span><span class="p">,</span>
+        <span class="mi">14</span><span class="p">,</span>
+        <span class="mi">3</span><span class="p">,</span>
+        <span class="mi">6</span><span class="p">,</span>
+        <span class="mi">6</span><span class="p">,</span>
+        <span class="mi">6</span><span class="p">,</span>
+        <span class="mi">3</span><span class="p">,</span>
+        <span class="mi">3</span><span class="p">,</span>
+        <span class="mi">3</span><span class="p">,</span>
+    <span class="p">]</span>
+<span class="p">)</span>
+
+<span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="mi">0</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">0.5</span><span class="p">,</span>
+        <span class="mf">0.875</span><span class="p">,</span>
+        <span class="mi">1</span><span class="p">,</span>
+        <span class="mf">0.5</span><span class="p">,</span>
+        <span class="mf">0.75</span><span class="p">,</span>
+        <span class="mf">0.375</span><span class="p">,</span>
+        <span class="mi">1</span><span class="p">,</span>
+        <span class="mi">4</span><span class="p">,</span>
+        <span class="mi">6</span><span class="p">,</span>
+        <span class="mi">12</span><span class="p">,</span>
+        <span class="mi">1</span><span class="p">,</span>
+        <span class="mi">5</span><span class="p">,</span>
+        <span class="mi">4</span><span class="p">,</span>
+        <span class="mi">2</span><span class="p">,</span>
+        <span class="mi">13</span><span class="p">,</span>
+        <span class="mi">9</span><span class="p">,</span>
+        <span class="mi">3</span><span class="p">,</span>
+        <span class="mi">4</span><span class="p">,</span>
+        <span class="mi">11</span><span class="p">,</span>
+        <span class="mi">4</span><span class="p">,</span>
+        <span class="mi">13</span><span class="p">,</span>
+        <span class="mi">1</span><span class="p">,</span>
+        <span class="mi">7</span><span class="p">,</span>
+        <span class="mi">1</span><span class="p">,</span>
+        <span class="mi">9</span><span class="p">,</span>
+        <span class="mi">10</span><span class="p">,</span>
+        <span class="mi">10</span><span class="p">,</span>
+        <span class="mi">3</span><span class="p">,</span>
+        <span class="mi">7</span><span class="p">,</span>
+        <span class="mi">10</span><span class="p">,</span>
+        <span class="mi">10</span><span class="p">,</span>
+        <span class="mi">6</span><span class="p">,</span>
+        <span class="mi">10</span><span class="p">,</span>
+        <span class="mi">10</span><span class="p">,</span>
+        <span class="mi">1</span><span class="p">,</span>
+        <span class="mi">2</span><span class="p">,</span>
+        <span class="mi">3</span><span class="p">,</span>
+        <span class="mi">4</span><span class="p">,</span>
+        <span class="mi">8</span><span class="p">,</span>
+        <span class="mi">6</span><span class="p">,</span>
+        <span class="mi">9</span><span class="p">,</span>
+        <span class="mi">8</span><span class="p">,</span>
+        <span class="mi">16</span><span class="p">,</span>
+        <span class="mi">22</span><span class="p">,</span>
+        <span class="mi">23</span><span class="p">,</span>
+        <span class="mi">23</span><span class="p">,</span>
+        <span class="mi">10</span><span class="p">,</span>
+        <span class="mi">50</span><span class="p">,</span>
+        <span class="mi">44</span><span class="p">,</span>
+        <span class="mi">46</span><span class="p">,</span>
+        <span class="mi">50</span><span class="p">,</span>
+        <span class="mi">0</span><span class="p">,</span>
+        <span class="mi">1</span><span class="p">,</span>
+        <span class="mi">4</span><span class="p">,</span>
+    <span class="p">]</span>
+<span class="p">)</span>
+
+<span class="n">n</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="mi">0</span><span class="p">,</span>
+        <span class="mf">0.12533547935523e-01</span><span class="p">,</span>
+        <span class="mf">0.78957634722828e01</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">0.87803203303561e01</span><span class="p">,</span>
+        <span class="mf">0.31802509345418</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">0.26145533859358</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">0.78199751687981e-02</span><span class="p">,</span>
+        <span class="mf">0.88089493102134e-02</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">0.66856572307965</span><span class="p">,</span>
+        <span class="mf">0.20433810950965</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">0.66212605039687e-04</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">0.19232721156002</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">0.25709043003438</span><span class="p">,</span>
+        <span class="mf">0.16074868486251</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">0.40092828925807e-01</span><span class="p">,</span>
+        <span class="mf">0.39343422603254e-06</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">0.75941377088144e-05</span><span class="p">,</span>
+        <span class="mf">0.56250979351888e-03</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">0.15608652257135e-04</span><span class="p">,</span>
+        <span class="mf">0.11537996422951e-08</span><span class="p">,</span>
+        <span class="mf">0.36582165144204e-06</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">0.13251180074668e-11</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">0.62639586912454e-09</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">0.10793600908932</span><span class="p">,</span>
+        <span class="mf">0.17611491008752e-01</span><span class="p">,</span>
+        <span class="mf">0.22132295167546</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">0.40247669763528</span><span class="p">,</span>
+        <span class="mf">0.58083399985759</span><span class="p">,</span>
+        <span class="mf">0.49969146990806e-02</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">0.31358700712549e-01</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">0.74315929710341</span><span class="p">,</span>
+        <span class="mf">0.47807329915480</span><span class="p">,</span>
+        <span class="mf">0.20527940895948e-01</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">0.13636435110343</span><span class="p">,</span>
+        <span class="mf">0.14180634400617e-01</span><span class="p">,</span>
+        <span class="mf">0.83326504880713e-02</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">0.29052336009585e-01</span><span class="p">,</span>
+        <span class="mf">0.38615085574206e-01</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">0.20393486513704e-01</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">0.16554050063734e-02</span><span class="p">,</span>
+        <span class="mf">0.19955571979541e-02</span><span class="p">,</span>
+        <span class="mf">0.15870308324157e-03</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">0.16388568342530e-04</span><span class="p">,</span>
+        <span class="mf">0.43613615723811e-01</span><span class="p">,</span>
+        <span class="mf">0.34994005463765e-01</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">0.76788197844621e-01</span><span class="p">,</span>
+        <span class="mf">0.22446277332006e-01</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">0.62689710414685e-04</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">0.55711118565645e-09</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">0.19905718354408</span><span class="p">,</span>
+        <span class="mf">0.31777497330738</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">0.11841182425981</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">0.31306260323435e02</span><span class="p">,</span>
+        <span class="mf">0.31546140237781e02</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">0.25213154341695e04</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">0.14874640856724</span><span class="p">,</span>
+        <span class="mf">0.31806110878444</span><span class="p">,</span>
+    <span class="p">]</span>
+<span class="p">)</span>
+
+<span class="n">alpha</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">])</span>
+<span class="n">beta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">150</span><span class="p">,</span> <span class="mi">150</span><span class="p">,</span> <span class="mi">250</span><span class="p">])</span>
+<span class="n">gamma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.21</span><span class="p">,</span> <span class="mf">1.21</span><span class="p">,</span> <span class="mf">1.25</span><span class="p">])</span>
+<span class="n">epsilon</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+<span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">3.5</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">])</span>
+<span class="n">b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.85</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">])</span>
+<span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.32</span><span class="p">,</span> <span class="mf">0.32</span><span class="p">])</span>
+<span class="n">B</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">])</span>
+<span class="n">C</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">28</span><span class="p">,</span> <span class="mi">32</span><span class="p">])</span>
+<span class="n">F</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">700</span><span class="p">,</span> <span class="mi">800</span><span class="p">])</span>  <span class="c1"># D has been replaced by F to avoid conflicts</span>
+<span class="n">E</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">])</span>
+
+<span class="c1"># Helmholtz Free Energy and its derivatives</span>
+<span class="n">HFEValues</span> <span class="o">=</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
+<span class="c1"># Returned water properties</span>
+<span class="n">_Props</span> <span class="o">=</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
+<span class="n">Props</span> <span class="o">=</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
+
+
+<span class="c1"># Table 6.4</span>
+<span class="nd">@njit</span>
+<span class="k">def</span> <span class="nf">fun_phio</span><span class="p">(</span><span class="n">delta</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">tau</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HFEValues</span><span class="p">:</span>
+    <span class="n">phio</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span> <span class="o">+</span> <span class="n">no</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">no</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="n">tau</span> <span class="o">+</span> <span class="n">no</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">tau</span><span class="p">)</span>
+    <span class="n">phio_d</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">delta</span>
+    <span class="n">phio_t</span> <span class="o">=</span> <span class="n">no</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">no</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">/</span> <span class="n">tau</span>
+    <span class="n">phio_dd</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="n">delta</span> <span class="o">*</span> <span class="n">delta</span><span class="p">)</span>
+    <span class="n">phio_dt</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">phio_tt</span> <span class="o">=</span> <span class="o">-</span><span class="n">no</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="n">tau</span> <span class="o">*</span> <span class="n">tau</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">9</span><span class="p">):</span>
+        <span class="n">j</span> <span class="o">=</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">4</span>
+        <span class="n">ee</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">gammao</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">*</span> <span class="n">tau</span><span class="p">)</span>
+        <span class="n">phio</span> <span class="o">+=</span> <span class="n">no</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">ee</span><span class="p">)</span>
+        <span class="n">phio_t</span> <span class="o">+=</span> <span class="n">no</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">gammao</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="n">ee</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">phio_tt</span> <span class="o">-=</span> <span class="n">no</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">ee</span> <span class="o">*</span> <span class="p">(</span><span class="n">gammao</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="n">ee</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span>
+
+    <span class="n">phio_dt</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+    <span class="k">return</span> <span class="n">phio</span><span class="p">,</span> <span class="n">phio_d</span><span class="p">,</span> <span class="n">phio_t</span><span class="p">,</span> <span class="n">phio_dd</span><span class="p">,</span> <span class="n">phio_dt</span><span class="p">,</span> <span class="n">phio_tt</span>
+
+
+<span class="c1"># Table 6.5</span>
+<span class="nd">@njit</span>
+<span class="k">def</span> <span class="nf">fun_phir</span><span class="p">(</span><span class="n">delta</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">tau</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HFEValues</span><span class="p">:</span>
+    <span class="n">phir</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">phir_d</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">phir_t</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">phir_dd</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">phir_dt</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">phir_tt</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">8</span><span class="p">):</span>
+        <span class="n">_A</span> <span class="o">=</span> <span class="n">n</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">delta</span> <span class="o">**</span> <span class="n">d</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">tau</span> <span class="o">**</span> <span class="n">t</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>  <span class="c1"># underscore to avoid conflict</span>
+        <span class="n">A_d</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">/</span> <span class="n">delta</span> <span class="o">*</span> <span class="n">_A</span>
+        <span class="n">A_t</span> <span class="o">=</span> <span class="n">t</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">/</span> <span class="n">tau</span> <span class="o">*</span> <span class="n">_A</span>
+        <span class="n">A_dd</span> <span class="o">=</span> <span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">delta</span> <span class="o">*</span> <span class="n">A_d</span>
+        <span class="n">A_dt</span> <span class="o">=</span> <span class="n">t</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">d</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="n">tau</span> <span class="o">*</span> <span class="n">delta</span><span class="p">)</span> <span class="o">*</span> <span class="n">_A</span>
+        <span class="n">A_tt</span> <span class="o">=</span> <span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">tau</span> <span class="o">*</span> <span class="n">A_t</span>
+
+        <span class="n">phir</span> <span class="o">+=</span> <span class="n">_A</span>
+        <span class="n">phir_d</span> <span class="o">+=</span> <span class="n">A_d</span>
+        <span class="n">phir_t</span> <span class="o">+=</span> <span class="n">A_t</span>
+        <span class="n">phir_dd</span> <span class="o">+=</span> <span class="n">A_dd</span>
+        <span class="n">phir_dt</span> <span class="o">+=</span> <span class="n">A_dt</span>
+        <span class="n">phir_tt</span> <span class="o">+=</span> <span class="n">A_tt</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">52</span><span class="p">):</span>
+        <span class="n">dci</span> <span class="o">=</span> <span class="n">delta</span> <span class="o">**</span> <span class="n">c</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">_B</span> <span class="o">=</span> <span class="n">n</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">delta</span> <span class="o">**</span> <span class="n">d</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">tau</span> <span class="o">**</span> <span class="n">t</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">dci</span><span class="p">)</span>
+        <span class="n">B_d</span> <span class="o">=</span> <span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">c</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">dci</span><span class="p">)</span> <span class="o">/</span> <span class="n">delta</span> <span class="o">*</span> <span class="n">_B</span>
+        <span class="n">B_t</span> <span class="o">=</span> <span class="n">t</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">/</span> <span class="n">tau</span> <span class="o">*</span> <span class="n">_B</span>
+        <span class="n">B_dd</span> <span class="o">=</span> <span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">c</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">dci</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">delta</span> <span class="o">*</span> <span class="n">B_d</span> <span class="o">-</span> <span class="n">dci</span> <span class="o">*</span> <span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">/</span> <span class="n">delta</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">_B</span>
+        <span class="n">B_dt</span> <span class="o">=</span> <span class="n">t</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">/</span> <span class="n">tau</span> <span class="o">*</span> <span class="n">B_d</span>
+        <span class="n">B_tt</span> <span class="o">=</span> <span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">tau</span> <span class="o">*</span> <span class="n">B_t</span>
+
+        <span class="n">phir</span> <span class="o">+=</span> <span class="n">_B</span>
+        <span class="n">phir_d</span> <span class="o">+=</span> <span class="n">B_d</span>
+        <span class="n">phir_t</span> <span class="o">+=</span> <span class="n">B_t</span>
+        <span class="n">phir_dd</span> <span class="o">+=</span> <span class="n">B_dd</span>
+        <span class="n">phir_dt</span> <span class="o">+=</span> <span class="n">B_dt</span>
+        <span class="n">phir_tt</span> <span class="o">+=</span> <span class="n">B_tt</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">52</span><span class="p">,</span> <span class="mi">55</span><span class="p">):</span>
+        <span class="n">j</span> <span class="o">=</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">52</span>
+
+        <span class="n">aux1d</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">/</span> <span class="n">delta</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">alpha</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">delta</span> <span class="o">-</span> <span class="n">epsilon</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
+        <span class="n">aux1t</span> <span class="o">=</span> <span class="n">t</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">/</span> <span class="n">tau</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">beta</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">tau</span> <span class="o">-</span> <span class="n">gamma</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
+        <span class="n">aux2d</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="n">delta</span> <span class="o">*</span> <span class="n">delta</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">alpha</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+        <span class="n">aux2t</span> <span class="o">=</span> <span class="n">t</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="n">tau</span> <span class="o">*</span> <span class="n">tau</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">beta</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+
+        <span class="n">_C</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">n</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="o">*</span> <span class="n">delta</span> <span class="o">**</span> <span class="n">d</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="o">*</span> <span class="n">tau</span> <span class="o">**</span> <span class="n">t</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">alpha</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">delta</span> <span class="o">-</span> <span class="n">epsilon</span><span class="p">[</span><span class="n">j</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">-</span> <span class="n">beta</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">tau</span> <span class="o">-</span> <span class="n">gamma</span><span class="p">[</span><span class="n">j</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">C_d</span> <span class="o">=</span> <span class="n">aux1d</span> <span class="o">*</span> <span class="n">_C</span>
+        <span class="n">C_t</span> <span class="o">=</span> <span class="n">aux1t</span> <span class="o">*</span> <span class="n">_C</span>
+        <span class="n">C_dd</span> <span class="o">=</span> <span class="n">aux1d</span> <span class="o">*</span> <span class="n">C_d</span> <span class="o">-</span> <span class="n">aux2d</span> <span class="o">*</span> <span class="n">_C</span>
+        <span class="n">C_dt</span> <span class="o">=</span> <span class="n">aux1d</span> <span class="o">*</span> <span class="n">aux1t</span> <span class="o">*</span> <span class="n">_C</span>
+        <span class="n">C_tt</span> <span class="o">=</span> <span class="n">aux1t</span> <span class="o">*</span> <span class="n">C_t</span> <span class="o">-</span> <span class="n">aux2t</span> <span class="o">*</span> <span class="n">_C</span>
+
+        <span class="n">phir</span> <span class="o">+=</span> <span class="n">_C</span>
+        <span class="n">phir_d</span> <span class="o">+=</span> <span class="n">C_d</span>
+        <span class="n">phir_t</span> <span class="o">+=</span> <span class="n">C_t</span>
+        <span class="n">phir_dd</span> <span class="o">+=</span> <span class="n">C_dd</span>
+        <span class="n">phir_dt</span> <span class="o">+=</span> <span class="n">C_dt</span>
+        <span class="n">phir_tt</span> <span class="o">+=</span> <span class="n">C_tt</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">55</span><span class="p">,</span> <span class="mi">57</span><span class="p">):</span>
+        <span class="n">j</span> <span class="o">=</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">55</span>
+        <span class="n">dd</span> <span class="o">=</span> <span class="p">(</span><span class="n">delta</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="n">tt</span> <span class="o">=</span> <span class="p">(</span><span class="n">tau</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+
+        <span class="n">theta</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">tau</span><span class="p">)</span> <span class="o">+</span> <span class="n">A</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">*</span> <span class="n">dd</span> <span class="o">**</span> <span class="p">(</span><span class="mf">0.5</span> <span class="o">/</span> <span class="n">E</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
+        <span class="n">theta_d</span> <span class="o">=</span> <span class="p">(</span><span class="n">theta</span> <span class="o">+</span> <span class="n">tau</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">delta</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">E</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+        <span class="n">theta_dd</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">E</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">theta_d</span> <span class="o">/</span> <span class="p">(</span><span class="n">delta</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">psi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">C</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">*</span> <span class="n">dd</span> <span class="o">-</span> <span class="n">F</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">*</span> <span class="n">tt</span><span class="p">)</span>
+        <span class="n">psi_d</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">C</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">delta</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">psi</span>
+        <span class="n">psi_t</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">F</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">tau</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">psi</span>
+        <span class="n">psi_dd</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">C</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">psi</span> <span class="o">+</span> <span class="p">(</span><span class="n">delta</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">psi_d</span><span class="p">)</span>
+        <span class="n">psi_dt</span> <span class="o">=</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">C</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">*</span> <span class="n">F</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">delta</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">tau</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">psi</span>
+        <span class="n">psi_tt</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">F</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">psi</span> <span class="o">+</span> <span class="p">(</span><span class="n">tau</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">psi_t</span><span class="p">)</span>
+
+        <span class="n">Delta</span> <span class="o">=</span> <span class="n">theta</span> <span class="o">*</span> <span class="n">theta</span> <span class="o">+</span> <span class="n">B</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">*</span> <span class="n">dd</span> <span class="o">**</span> <span class="n">a</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+        <span class="n">Delta_d</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">theta</span> <span class="o">*</span> <span class="n">theta_d</span> <span class="o">+</span> <span class="n">a</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">Delta</span> <span class="o">-</span> <span class="n">theta</span> <span class="o">*</span> <span class="n">theta</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">delta</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">Delta_t</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">theta</span>
+        <span class="n">Delta_dd</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span>
+            <span class="n">theta_d</span> <span class="o">*</span> <span class="n">theta_d</span>
+            <span class="o">+</span> <span class="n">theta</span> <span class="o">*</span> <span class="n">theta_dd</span>
+            <span class="o">+</span> <span class="n">a</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+            <span class="o">*</span> <span class="p">(</span>
+                <span class="p">(</span><span class="n">Delta_d</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">theta</span> <span class="o">*</span> <span class="n">theta_d</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">delta</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="o">-</span> <span class="p">(</span><span class="n">Delta</span> <span class="o">-</span> <span class="n">theta</span> <span class="o">*</span> <span class="n">theta</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">delta</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">Delta_dt</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">theta_d</span>
+        <span class="n">Delta_tt</span> <span class="o">=</span> <span class="mi">2</span>
+
+        <span class="n">DeltaPow</span> <span class="o">=</span> <span class="n">Delta</span> <span class="o">**</span> <span class="n">b</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+        <span class="n">DeltaPow_d</span> <span class="o">=</span> <span class="n">b</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">*</span> <span class="n">Delta_d</span> <span class="o">/</span> <span class="n">Delta</span> <span class="o">*</span> <span class="n">DeltaPow</span>
+        <span class="n">DeltaPow_t</span> <span class="o">=</span> <span class="n">b</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">*</span> <span class="n">Delta_t</span> <span class="o">/</span> <span class="n">Delta</span> <span class="o">*</span> <span class="n">DeltaPow</span>
+        <span class="n">DeltaPow_dd</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">b</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">*</span> <span class="n">Delta_dd</span> <span class="o">/</span> <span class="n">Delta</span> <span class="o">+</span> <span class="n">b</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">b</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">Delta_d</span> <span class="o">/</span> <span class="n">Delta</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="p">)</span> <span class="o">*</span> <span class="n">DeltaPow</span>
+        <span class="n">DeltaPow_dt</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">b</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">*</span> <span class="n">Delta_dt</span> <span class="o">/</span> <span class="n">Delta</span> <span class="o">+</span> <span class="n">b</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">b</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">Delta_d</span> <span class="o">/</span> <span class="n">Delta</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">Delta_t</span> <span class="o">/</span> <span class="n">Delta</span><span class="p">)</span>
+        <span class="p">)</span> <span class="o">*</span> <span class="n">DeltaPow</span>
+        <span class="n">DeltaPow_tt</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">b</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">*</span> <span class="n">Delta_tt</span> <span class="o">/</span> <span class="n">Delta</span> <span class="o">+</span> <span class="n">b</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">b</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">Delta_t</span> <span class="o">/</span> <span class="n">Delta</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="p">)</span> <span class="o">*</span> <span class="n">DeltaPow</span>
+
+        <span class="n">D</span> <span class="o">=</span> <span class="n">n</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">DeltaPow</span> <span class="o">*</span> <span class="n">delta</span> <span class="o">*</span> <span class="n">psi</span>
+        <span class="n">D_d</span> <span class="o">=</span> <span class="n">n</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">DeltaPow</span> <span class="o">*</span> <span class="p">(</span><span class="n">psi</span> <span class="o">+</span> <span class="n">delta</span> <span class="o">*</span> <span class="n">psi_d</span><span class="p">)</span> <span class="o">+</span> <span class="n">DeltaPow_d</span> <span class="o">*</span> <span class="n">delta</span> <span class="o">*</span> <span class="n">psi</span><span class="p">)</span>
+        <span class="n">D_t</span> <span class="o">=</span> <span class="n">n</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">delta</span> <span class="o">*</span> <span class="p">(</span><span class="n">DeltaPow_t</span> <span class="o">*</span> <span class="n">psi</span> <span class="o">+</span> <span class="n">DeltaPow</span> <span class="o">*</span> <span class="n">psi_t</span><span class="p">)</span>
+        <span class="n">D_dd</span> <span class="o">=</span> <span class="n">n</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span>
+            <span class="n">DeltaPow</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">psi_d</span> <span class="o">+</span> <span class="n">delta</span> <span class="o">*</span> <span class="n">psi_dd</span><span class="p">)</span>
+            <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">DeltaPow_d</span> <span class="o">*</span> <span class="p">(</span><span class="n">psi</span> <span class="o">+</span> <span class="n">delta</span> <span class="o">*</span> <span class="n">psi_d</span><span class="p">)</span>
+            <span class="o">+</span> <span class="n">DeltaPow_dd</span> <span class="o">*</span> <span class="n">delta</span> <span class="o">*</span> <span class="n">psi</span>
+        <span class="p">)</span>
+        <span class="n">D_dt</span> <span class="o">=</span> <span class="n">n</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span>
+            <span class="n">DeltaPow</span> <span class="o">*</span> <span class="p">(</span><span class="n">psi_t</span> <span class="o">+</span> <span class="n">delta</span> <span class="o">*</span> <span class="n">psi_dt</span><span class="p">)</span>
+            <span class="o">+</span> <span class="n">delta</span> <span class="o">*</span> <span class="n">DeltaPow_d</span> <span class="o">*</span> <span class="n">psi_t</span>
+            <span class="o">+</span> <span class="n">DeltaPow_t</span> <span class="o">*</span> <span class="p">(</span><span class="n">psi</span> <span class="o">+</span> <span class="n">delta</span> <span class="o">*</span> <span class="n">psi_d</span><span class="p">)</span>
+            <span class="o">+</span> <span class="n">DeltaPow_dt</span> <span class="o">*</span> <span class="n">delta</span> <span class="o">*</span> <span class="n">psi</span>
+        <span class="p">)</span>
+        <span class="n">D_tt</span> <span class="o">=</span> <span class="n">n</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">delta</span> <span class="o">*</span> <span class="p">(</span><span class="n">DeltaPow_tt</span> <span class="o">*</span> <span class="n">psi</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">DeltaPow_t</span> <span class="o">*</span> <span class="n">psi_t</span> <span class="o">+</span> <span class="n">DeltaPow</span> <span class="o">*</span> <span class="n">psi_tt</span><span class="p">)</span>
+
+        <span class="n">phir</span> <span class="o">+=</span> <span class="n">D</span>
+        <span class="n">phir_d</span> <span class="o">+=</span> <span class="n">D_d</span>
+        <span class="n">phir_t</span> <span class="o">+=</span> <span class="n">D_t</span>
+        <span class="n">phir_dd</span> <span class="o">+=</span> <span class="n">D_dd</span>
+        <span class="n">phir_dt</span> <span class="o">+=</span> <span class="n">D_dt</span>
+        <span class="n">phir_tt</span> <span class="o">+=</span> <span class="n">D_tt</span>
+
+    <span class="k">return</span> <span class="n">phir</span><span class="p">,</span> <span class="n">phir_d</span><span class="p">,</span> <span class="n">phir_t</span><span class="p">,</span> <span class="n">phir_dd</span><span class="p">,</span> <span class="n">phir_dt</span><span class="p">,</span> <span class="n">phir_tt</span>
+
+
+<span class="c1"># Formula 6.4</span>
+<span class="nd">@njit</span>
+<span class="k">def</span> <span class="nf">fun_phi</span><span class="p">(</span><span class="n">delta</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">tau</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HFEValues</span><span class="p">:</span>
+    <span class="n">phio</span><span class="p">,</span> <span class="n">phio_d</span><span class="p">,</span> <span class="n">phio_t</span><span class="p">,</span> <span class="n">phio_dd</span><span class="p">,</span> <span class="n">phio_dt</span><span class="p">,</span> <span class="n">phio_tt</span> <span class="o">=</span> <span class="n">fun_phio</span><span class="p">(</span><span class="n">delta</span><span class="p">,</span> <span class="n">tau</span><span class="p">)</span>
+    <span class="n">phir</span><span class="p">,</span> <span class="n">phir_d</span><span class="p">,</span> <span class="n">phir_t</span><span class="p">,</span> <span class="n">phir_dd</span><span class="p">,</span> <span class="n">phir_dt</span><span class="p">,</span> <span class="n">phir_tt</span> <span class="o">=</span> <span class="n">fun_phir</span><span class="p">(</span><span class="n">delta</span><span class="p">,</span> <span class="n">tau</span><span class="p">)</span>
+
+    <span class="n">phi</span> <span class="o">=</span> <span class="n">phio</span> <span class="o">+</span> <span class="n">phir</span>
+    <span class="n">phi_d</span> <span class="o">=</span> <span class="n">phio_d</span> <span class="o">+</span> <span class="n">phir_d</span>
+    <span class="n">phi_t</span> <span class="o">=</span> <span class="n">phio_t</span> <span class="o">+</span> <span class="n">phir_t</span>
+    <span class="n">phi_dd</span> <span class="o">=</span> <span class="n">phio_dd</span> <span class="o">+</span> <span class="n">phir_dd</span>
+    <span class="n">phi_dt</span> <span class="o">=</span> <span class="n">phio_dt</span> <span class="o">+</span> <span class="n">phir_dt</span>
+    <span class="n">phi_tt</span> <span class="o">=</span> <span class="n">phio_tt</span> <span class="o">+</span> <span class="n">phir_tt</span>
+
+    <span class="k">return</span> <span class="n">phi</span><span class="p">,</span> <span class="n">phi_d</span><span class="p">,</span> <span class="n">phi_t</span><span class="p">,</span> <span class="n">phi_dd</span><span class="p">,</span> <span class="n">phi_dt</span><span class="p">,</span> <span class="n">phi_tt</span>
+
+
+<span class="c1"># Table 6.3</span>
+<span class="nd">@njit</span>
+<span class="k">def</span> <span class="nf">_water_props</span><span class="p">(</span><span class="n">delta</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">tau</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_Props</span><span class="p">:</span>
+    <span class="n">T</span> <span class="o">=</span> <span class="n">T_c</span> <span class="o">/</span> <span class="n">tau</span>
+    <span class="n">phio</span><span class="p">,</span> <span class="n">phio_d</span><span class="p">,</span> <span class="n">phio_t</span><span class="p">,</span> <span class="n">phio_dd</span><span class="p">,</span> <span class="n">phio_dt</span><span class="p">,</span> <span class="n">phio_tt</span> <span class="o">=</span> <span class="n">fun_phio</span><span class="p">(</span><span class="n">delta</span><span class="p">,</span> <span class="n">tau</span><span class="p">)</span>
+    <span class="n">phir</span><span class="p">,</span> <span class="n">phir_d</span><span class="p">,</span> <span class="n">phir_t</span><span class="p">,</span> <span class="n">phir_dd</span><span class="p">,</span> <span class="n">phir_dt</span><span class="p">,</span> <span class="n">phir_tt</span> <span class="o">=</span> <span class="n">fun_phir</span><span class="p">(</span><span class="n">delta</span><span class="p">,</span> <span class="n">tau</span><span class="p">)</span>
+
+    <span class="n">phi</span> <span class="o">=</span> <span class="n">phio</span> <span class="o">+</span> <span class="n">phir</span>
+    <span class="n">t_phi_t</span> <span class="o">=</span> <span class="p">(</span><span class="n">phio_t</span> <span class="o">+</span> <span class="n">phir_t</span><span class="p">)</span> <span class="o">*</span> <span class="n">tau</span>
+    <span class="n">tt_phi_tt</span> <span class="o">=</span> <span class="p">(</span><span class="n">phio_tt</span> <span class="o">+</span> <span class="n">phir_tt</span><span class="p">)</span> <span class="o">*</span> <span class="n">tau</span> <span class="o">*</span> <span class="n">tau</span>
+    <span class="n">d_phir_d</span> <span class="o">=</span> <span class="n">phir_d</span> <span class="o">*</span> <span class="n">delta</span>
+    <span class="n">dd_phir_dd</span> <span class="o">=</span> <span class="n">phir_dd</span> <span class="o">*</span> <span class="n">delta</span> <span class="o">*</span> <span class="n">delta</span>
+    <span class="n">dt_phir_dt</span> <span class="o">=</span> <span class="n">phir_dt</span> <span class="o">*</span> <span class="n">delta</span> <span class="o">*</span> <span class="n">tau</span>
+
+    <span class="n">s</span> <span class="o">=</span> <span class="n">R</span> <span class="o">*</span> <span class="p">(</span><span class="n">t_phi_t</span> <span class="o">-</span> <span class="n">phi</span><span class="p">)</span>
+    <span class="n">u</span> <span class="o">=</span> <span class="n">R</span> <span class="o">*</span> <span class="n">T</span> <span class="o">*</span> <span class="n">t_phi_t</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">R</span> <span class="o">*</span> <span class="n">T</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">t_phi_t</span> <span class="o">+</span> <span class="n">d_phir_d</span><span class="p">)</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="n">h</span> <span class="o">-</span> <span class="n">T</span> <span class="o">*</span> <span class="n">s</span>
+    <span class="n">cv</span> <span class="o">=</span> <span class="o">-</span><span class="n">R</span> <span class="o">*</span> <span class="n">tt_phi_tt</span>
+
+    <span class="n">aux1</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">d_phir_d</span> <span class="o">-</span> <span class="n">dt_phir_dt</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+    <span class="n">aux2</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">d_phir_d</span> <span class="o">+</span> <span class="n">dd_phir_dd</span>
+
+    <span class="n">cp</span> <span class="o">=</span> <span class="n">cv</span> <span class="o">+</span> <span class="n">R</span> <span class="o">*</span> <span class="n">aux1</span> <span class="o">/</span> <span class="n">aux2</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">R</span> <span class="o">*</span> <span class="n">T</span> <span class="o">*</span> <span class="p">(</span><span class="n">aux2</span> <span class="o">-</span> <span class="n">aux1</span> <span class="o">/</span> <span class="n">tt_phi_tt</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">s</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">cv</span><span class="p">,</span> <span class="n">cp</span><span class="p">,</span> <span class="n">w</span>
+
+
+<span class="c1"># Find properties given pressure, temperature and an estimate of density</span>
+<div class="viewcode-block" id="water_props"><a class="viewcode-back" href="../../generated/pyiapws95.wagner.water_props.html#pyiapws95.wagner.water_props">[docs]</a><span class="nd">@njit</span>
+<span class="k">def</span> <span class="nf">water_props</span><span class="p">(</span><span class="n">pressure</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">density</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Props</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Computes water properties.</span>
+
+<span class="sd">    Implements formulas from table 6.3 in</span>
+<span class="sd">    `Wagner and Pruss &lt;https://aip.scitation.org/doi/10.1063/1.1461829&gt;`_</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    pressure : float</span>
+<span class="sd">        Pressure [Pa]</span>
+<span class="sd">    temperature : float</span>
+<span class="sd">        Temperature [K]</span>
+<span class="sd">    density : float</span>
+<span class="sd">        Initial density [kg/m^3]</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    tuple or None</span>
+<span class="sd">        Calculated values: &#39;temperature&#39;, &#39;pressure&#39;, &#39;density&#39;, &#39;entropy&#39;,</span>
+<span class="sd">        &#39;internal_energy&#39;, &#39;enthalpy&#39;, &#39;gibbs_free_energy&#39;, &#39;isochoric_heat_capacity&#39;,</span>
+<span class="sd">        &#39;isobaric_heat_capacity&#39;, &#39;speed_of_sound&#39;. When iteration fails to converge</span>
+<span class="sd">        `None` is returned.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">max_iters</span> <span class="o">=</span> <span class="mi">100</span>
+    <span class="n">tolerance</span> <span class="o">=</span> <span class="mf">1e-7</span> <span class="o">*</span> <span class="n">rho_c</span>
+
+    <span class="n">delta</span> <span class="o">=</span> <span class="n">density</span> <span class="o">/</span> <span class="n">rho_c</span>
+    <span class="n">tau</span> <span class="o">=</span> <span class="n">T_c</span> <span class="o">/</span> <span class="n">temperature</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">rho_c</span> <span class="o">*</span> <span class="n">R</span> <span class="o">*</span> <span class="n">temperature</span>
+    <span class="c1"># Calculate density from the first equation in Table 6.3.</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_iters</span><span class="p">):</span>
+        <span class="n">phir</span><span class="p">,</span> <span class="n">phir_d</span><span class="p">,</span> <span class="n">phir_t</span><span class="p">,</span> <span class="n">phir_dd</span><span class="p">,</span> <span class="n">phir_dt</span><span class="p">,</span> <span class="n">phir_tt</span> <span class="o">=</span> <span class="n">fun_phir</span><span class="p">(</span><span class="n">delta</span><span class="p">,</span> <span class="n">tau</span><span class="p">)</span>
+        <span class="n">d_phir_d</span> <span class="o">=</span> <span class="n">phir_d</span> <span class="o">*</span> <span class="n">delta</span>
+        <span class="n">dd_phir_dd</span> <span class="o">=</span> <span class="n">phir_dd</span> <span class="o">*</span> <span class="n">delta</span> <span class="o">*</span> <span class="n">delta</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">c</span> <span class="o">*</span> <span class="n">delta</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">d_phir_d</span><span class="p">)</span> <span class="o">-</span> <span class="n">pressure</span>
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">tolerance</span><span class="p">:</span>
+            <span class="c1"># Found density, calculate remaining properties</span>
+            <span class="n">props</span> <span class="o">=</span> <span class="p">(</span><span class="n">temperature</span><span class="p">,</span> <span class="n">pressure</span><span class="p">,</span> <span class="n">delta</span> <span class="o">*</span> <span class="n">rho_c</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">props</span> <span class="o">+</span> <span class="n">_water_props</span><span class="p">(</span><span class="n">delta</span><span class="p">,</span> <span class="n">tau</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">c</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">d_phir_d</span> <span class="o">+</span> <span class="n">dd_phir_dd</span><span class="p">)</span>
+        <span class="n">delta</span> <span class="o">-=</span> <span class="n">f</span> <span class="o">/</span> <span class="n">df</span>
+
+    <span class="c1"># Iteration failed</span>
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<span class="c1"># Find properties at saturation given temperature</span>
+<span class="c1"># Formulas 6.9a - 6.9c</span>
+<div class="viewcode-block" id="saturation_props"><a class="viewcode-back" href="../../generated/pyiapws95.wagner.saturation_props.html#pyiapws95.wagner.saturation_props">[docs]</a><span class="nd">@njit</span>
+<span class="k">def</span> <span class="nf">saturation_props</span><span class="p">(</span><span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Props</span><span class="p">,</span> <span class="n">Props</span><span class="p">],</span> <span class="kc">None</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Computes water properties at saturation pressure.</span>
+
+<span class="sd">    Implements formulas 6.9a - 6.9c from</span>
+<span class="sd">    `Wagner and Pruss &lt;https://aip.scitation.org/doi/10.1063/1.1461829&gt;`_</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    temperature : float</span>
+<span class="sd">        Temperature [K]</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    tuple or None</span>
+<span class="sd">        Tuple with fields: &#39;liquid&#39; and &#39;vapour&#39;. Each field is a tuple with water</span>
+<span class="sd">        properties for the relevant phase. When iteration fails to converge</span>
+<span class="sd">        `None` is returned.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    water_props : Return water properties for single phase.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">max_iters</span> <span class="o">=</span> <span class="mi">100</span>
+    <span class="n">tolerance</span> <span class="o">=</span> <span class="mf">1e-6</span> <span class="o">*</span> <span class="n">rho_c</span>
+
+    <span class="n">tau</span> <span class="o">=</span> <span class="n">T_c</span> <span class="o">/</span> <span class="n">temperature</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">rho_c</span> <span class="o">*</span> <span class="n">R</span> <span class="o">*</span> <span class="n">temperature</span>
+    <span class="n">delta1</span> <span class="o">=</span> <span class="n">saturated_liquid_density</span><span class="p">(</span><span class="n">temperature</span><span class="p">)</span> <span class="o">/</span> <span class="n">rho_c</span>
+    <span class="n">delta2</span> <span class="o">=</span> <span class="n">saturated_vapour_density</span><span class="p">(</span><span class="n">temperature</span><span class="p">)</span> <span class="o">/</span> <span class="n">rho_c</span>
+    <span class="n">ps</span> <span class="o">=</span> <span class="n">saturated_vapour_pressure</span><span class="p">(</span><span class="n">temperature</span><span class="p">)</span>
+    <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">delta1</span><span class="p">,</span> <span class="n">delta2</span><span class="p">,</span> <span class="n">ps</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_iters</span><span class="p">):</span>
+        <span class="n">delta1</span><span class="p">,</span> <span class="n">delta2</span><span class="p">,</span> <span class="n">ps</span> <span class="o">=</span> <span class="n">X</span>
+        <span class="n">phir1</span><span class="p">,</span> <span class="n">phir_d1</span><span class="p">,</span> <span class="n">phir_t1</span><span class="p">,</span> <span class="n">phir_dd1</span><span class="p">,</span> <span class="n">phir_dt1</span><span class="p">,</span> <span class="n">phir_tt1</span> <span class="o">=</span> <span class="n">fun_phir</span><span class="p">(</span><span class="n">delta1</span><span class="p">,</span> <span class="n">tau</span><span class="p">)</span>
+        <span class="n">phir2</span><span class="p">,</span> <span class="n">phir_d2</span><span class="p">,</span> <span class="n">phir_t2</span><span class="p">,</span> <span class="n">phir_dd2</span><span class="p">,</span> <span class="n">phir_dt2</span><span class="p">,</span> <span class="n">phir_tt2</span> <span class="o">=</span> <span class="n">fun_phir</span><span class="p">(</span><span class="n">delta2</span><span class="p">,</span> <span class="n">tau</span><span class="p">)</span>
+
+        <span class="n">d_phir_d1</span> <span class="o">=</span> <span class="n">delta1</span> <span class="o">*</span> <span class="n">phir_d1</span>
+        <span class="n">dd_phir_dd1</span> <span class="o">=</span> <span class="n">delta1</span> <span class="o">*</span> <span class="n">delta1</span> <span class="o">*</span> <span class="n">phir_dd1</span>
+        <span class="n">d_phir_d2</span> <span class="o">=</span> <span class="n">delta2</span> <span class="o">*</span> <span class="n">phir_d2</span>
+        <span class="n">dd_phir_dd2</span> <span class="o">=</span> <span class="n">delta2</span> <span class="o">*</span> <span class="n">delta2</span> <span class="o">*</span> <span class="n">phir_dd2</span>
+
+        <span class="n">f1</span> <span class="o">=</span> <span class="n">c</span> <span class="o">*</span> <span class="n">delta1</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">d_phir_d1</span><span class="p">)</span> <span class="o">-</span> <span class="n">ps</span>
+        <span class="n">f2</span> <span class="o">=</span> <span class="n">c</span> <span class="o">*</span> <span class="n">delta2</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">d_phir_d2</span><span class="p">)</span> <span class="o">-</span> <span class="n">ps</span>
+        <span class="c1"># By subtraction of 6.9a and 6.9.b from 6.9c</span>
+        <span class="n">f3</span> <span class="o">=</span> <span class="p">(</span><span class="n">phir1</span> <span class="o">-</span> <span class="n">phir2</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">delta1</span> <span class="o">/</span> <span class="n">delta2</span><span class="p">))</span> <span class="o">+</span> <span class="n">d_phir_d1</span> <span class="o">-</span> <span class="n">d_phir_d2</span>
+
+        <span class="k">if</span> <span class="nb">max</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">f1</span><span class="p">),</span> <span class="nb">abs</span><span class="p">(</span><span class="n">f2</span><span class="p">))</span> <span class="o">&lt;</span> <span class="n">tolerance</span><span class="p">:</span>
+            <span class="n">props</span> <span class="o">=</span> <span class="p">(</span><span class="n">temperature</span><span class="p">,</span> <span class="n">ps</span><span class="p">)</span>
+            <span class="n">props_liquid</span> <span class="o">=</span> <span class="n">props</span> <span class="o">+</span> <span class="p">(</span><span class="n">delta1</span> <span class="o">*</span> <span class="n">rho_c</span><span class="p">,)</span> <span class="o">+</span> <span class="n">_water_props</span><span class="p">(</span><span class="n">delta1</span><span class="p">,</span> <span class="n">tau</span><span class="p">)</span>
+            <span class="n">props_vapour</span> <span class="o">=</span> <span class="n">props</span> <span class="o">+</span> <span class="p">(</span><span class="n">delta2</span> <span class="o">*</span> <span class="n">rho_c</span><span class="p">,)</span> <span class="o">+</span> <span class="n">_water_props</span><span class="p">(</span><span class="n">delta2</span><span class="p">,</span> <span class="n">tau</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">props_liquid</span><span class="p">,</span> <span class="n">props_vapour</span>
+
+        <span class="n">F</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">f1</span><span class="p">,</span> <span class="n">f2</span><span class="p">,</span> <span class="n">f3</span><span class="p">])</span>
+        <span class="n">aux1</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">d_phir_d1</span> <span class="o">+</span> <span class="n">dd_phir_dd1</span>
+        <span class="n">aux2</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">d_phir_d2</span> <span class="o">+</span> <span class="n">dd_phir_dd2</span>
+        <span class="n">J</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">c</span> <span class="o">*</span> <span class="n">aux1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">c</span> <span class="o">*</span> <span class="n">aux2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="n">aux1</span> <span class="o">/</span> <span class="n">delta1</span><span class="p">,</span> <span class="o">-</span><span class="n">aux2</span> <span class="o">/</span> <span class="n">delta2</span><span class="p">,</span> <span class="mi">0</span><span class="p">]])</span>
+        <span class="n">D</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">J</span><span class="p">,</span> <span class="n">F</span><span class="p">)</span>
+        <span class="n">X</span> <span class="o">-=</span> <span class="n">D</span>
+
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<span class="c1"># Formula 2.5</span>
+<div class="viewcode-block" id="saturated_vapour_pressure"><a class="viewcode-back" href="../../generated/pyiapws95.wagner.saturated_vapour_pressure.html#pyiapws95.wagner.saturated_vapour_pressure">[docs]</a><span class="nd">@njit</span>
+<span class="k">def</span> <span class="nf">saturated_vapour_pressure</span><span class="p">(</span>
+    <span class="n">temperature</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Computes saturation vapour pressure.</span>
+
+<span class="sd">    Implements formula 2.5 from</span>
+<span class="sd">    `Wagner and Pruss &lt;https://aip.scitation.org/doi/10.1063/1.1461829&gt;`_</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    temperature : float or numpy.ndarray</span>
+<span class="sd">        Temperature [K]</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    float or numpy.ndarray</span>
+<span class="sd">        Vapour pressure [Pa]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">a1</span> <span class="o">=</span> <span class="o">-</span><span class="mf">7.85951783</span>
+    <span class="n">a2</span> <span class="o">=</span> <span class="mf">1.84408259</span>
+    <span class="n">a3</span> <span class="o">=</span> <span class="o">-</span><span class="mf">11.7866497</span>
+    <span class="n">a4</span> <span class="o">=</span> <span class="mf">22.6807411</span>
+    <span class="n">a5</span> <span class="o">=</span> <span class="o">-</span><span class="mf">15.9618719</span>
+    <span class="n">a6</span> <span class="o">=</span> <span class="mf">1.80122502</span>
+
+    <span class="n">t</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">temperature</span> <span class="o">/</span> <span class="n">T_c</span>
+    <span class="n">t15</span> <span class="o">=</span> <span class="n">t</span> <span class="o">**</span> <span class="mf">1.5</span>
+    <span class="n">t30</span> <span class="o">=</span> <span class="n">t15</span> <span class="o">*</span> <span class="n">t15</span>
+    <span class="n">t35</span> <span class="o">=</span> <span class="n">t15</span> <span class="o">*</span> <span class="n">t</span> <span class="o">*</span> <span class="n">t</span>
+    <span class="n">t40</span> <span class="o">=</span> <span class="n">t30</span> <span class="o">*</span> <span class="n">t</span>
+    <span class="n">t75</span> <span class="o">=</span> <span class="n">t35</span> <span class="o">*</span> <span class="n">t40</span>
+
+    <span class="n">e</span> <span class="o">=</span> <span class="n">a1</span> <span class="o">*</span> <span class="n">t</span> <span class="o">+</span> <span class="n">a2</span> <span class="o">*</span> <span class="n">t15</span> <span class="o">+</span> <span class="n">a3</span> <span class="o">*</span> <span class="n">t30</span> <span class="o">+</span> <span class="n">a4</span> <span class="o">*</span> <span class="n">t35</span> <span class="o">+</span> <span class="n">a5</span> <span class="o">*</span> <span class="n">t40</span> <span class="o">+</span> <span class="n">a6</span> <span class="o">*</span> <span class="n">t75</span>
+    <span class="k">return</span> <span class="n">p_c</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">T_c</span> <span class="o">/</span> <span class="n">temperature</span> <span class="o">*</span> <span class="n">e</span><span class="p">)</span></div>
+
+
+<span class="c1"># Formula 2.6</span>
+<div class="viewcode-block" id="saturated_liquid_density"><a class="viewcode-back" href="../../generated/pyiapws95.wagner.saturated_liquid_density.html#pyiapws95.wagner.saturated_liquid_density">[docs]</a><span class="nd">@njit</span>
+<span class="k">def</span> <span class="nf">saturated_liquid_density</span><span class="p">(</span><span class="n">temperature</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Computes saturated liquid density.</span>
+
+<span class="sd">    Implements formula 2.6 from</span>
+<span class="sd">    `Wagner and Pruss &lt;https://aip.scitation.org/doi/10.1063/1.1461829&gt;`_</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    temperature : float or numpy.ndarray</span>
+<span class="sd">        Temperature [K]</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    float or numpy.ndarray</span>
+<span class="sd">        Density [kg m^-3]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">b1</span> <span class="o">=</span> <span class="mf">1.99274064</span>
+    <span class="n">b2</span> <span class="o">=</span> <span class="mf">1.09965342</span>
+    <span class="n">b3</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.510839303</span>
+    <span class="n">b4</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.75493479</span>
+    <span class="n">b5</span> <span class="o">=</span> <span class="o">-</span><span class="mf">45.5170352</span>
+    <span class="n">b6</span> <span class="o">=</span> <span class="o">-</span><span class="mf">6.74694450e05</span>
+
+    <span class="n">t</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">temperature</span> <span class="o">/</span> <span class="n">T_c</span>
+    <span class="n">t13</span> <span class="o">=</span> <span class="n">t</span> <span class="o">**</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="mf">3.0</span><span class="p">)</span>
+    <span class="n">t23</span> <span class="o">=</span> <span class="n">t13</span> <span class="o">*</span> <span class="n">t13</span>
+    <span class="n">t53</span> <span class="o">=</span> <span class="n">t13</span> <span class="o">*</span> <span class="n">t23</span> <span class="o">*</span> <span class="n">t23</span>
+    <span class="n">t163</span> <span class="o">=</span> <span class="n">t13</span> <span class="o">*</span> <span class="n">t53</span> <span class="o">*</span> <span class="n">t53</span> <span class="o">*</span> <span class="n">t53</span>
+    <span class="n">t433</span> <span class="o">=</span> <span class="n">t163</span> <span class="o">*</span> <span class="n">t163</span> <span class="o">*</span> <span class="n">t53</span> <span class="o">*</span> <span class="n">t</span> <span class="o">*</span> <span class="n">t</span>
+    <span class="n">t1103</span> <span class="o">=</span> <span class="n">t433</span> <span class="o">*</span> <span class="n">t433</span> <span class="o">*</span> <span class="n">t163</span> <span class="o">*</span> <span class="n">t53</span> <span class="o">*</span> <span class="n">t</span>
+
+    <span class="n">e</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">+</span> <span class="n">b1</span> <span class="o">*</span> <span class="n">t13</span> <span class="o">+</span> <span class="n">b2</span> <span class="o">*</span> <span class="n">t23</span> <span class="o">+</span> <span class="n">b3</span> <span class="o">*</span> <span class="n">t53</span> <span class="o">+</span> <span class="n">b4</span> <span class="o">*</span> <span class="n">t163</span> <span class="o">+</span> <span class="n">b5</span> <span class="o">*</span> <span class="n">t433</span> <span class="o">+</span> <span class="n">b6</span> <span class="o">*</span> <span class="n">t1103</span>
+    <span class="k">return</span> <span class="n">rho_c</span> <span class="o">*</span> <span class="n">e</span></div>
+
+
+<span class="c1"># Formula 2.7</span>
+<div class="viewcode-block" id="saturated_vapour_density"><a class="viewcode-back" href="../../generated/pyiapws95.wagner.saturated_vapour_density.html#pyiapws95.wagner.saturated_vapour_density">[docs]</a><span class="nd">@njit</span>
+<span class="k">def</span> <span class="nf">saturated_vapour_density</span><span class="p">(</span><span class="n">temperature</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Computes saturated vapour density.</span>
+
+<span class="sd">    Implements formula 2.7 from</span>
+<span class="sd">    `Wagner and Pruss &lt;https://aip.scitation.org/doi/10.1063/1.1461829&gt;`_</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    temperature : float or numpy.ndarray</span>
+<span class="sd">        Temperature [K]</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    float or numpy.ndarray</span>
+<span class="sd">        Density [kg m^-3]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">c1</span> <span class="o">=</span> <span class="o">-</span><span class="mf">2.03150240</span>
+    <span class="n">c2</span> <span class="o">=</span> <span class="o">-</span><span class="mf">2.68302940</span>
+    <span class="n">c3</span> <span class="o">=</span> <span class="o">-</span><span class="mf">5.38626492</span>
+    <span class="n">c4</span> <span class="o">=</span> <span class="o">-</span><span class="mf">17.2991605</span>
+    <span class="n">c5</span> <span class="o">=</span> <span class="o">-</span><span class="mf">44.7586581</span>
+    <span class="n">c6</span> <span class="o">=</span> <span class="o">-</span><span class="mf">63.9201063</span>
+
+    <span class="n">t</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">temperature</span> <span class="o">/</span> <span class="n">T_c</span>
+    <span class="n">t16</span> <span class="o">=</span> <span class="n">t</span> <span class="o">**</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="mf">6.0</span><span class="p">)</span>
+    <span class="n">t26</span> <span class="o">=</span> <span class="n">t16</span> <span class="o">*</span> <span class="n">t16</span>
+    <span class="n">t46</span> <span class="o">=</span> <span class="n">t26</span> <span class="o">*</span> <span class="n">t26</span>
+    <span class="n">t86</span> <span class="o">=</span> <span class="n">t46</span> <span class="o">*</span> <span class="n">t46</span>
+    <span class="n">t186</span> <span class="o">=</span> <span class="n">t86</span> <span class="o">*</span> <span class="n">t86</span> <span class="o">*</span> <span class="n">t26</span>
+    <span class="n">t376</span> <span class="o">=</span> <span class="n">t186</span> <span class="o">*</span> <span class="n">t186</span> <span class="o">*</span> <span class="n">t16</span>
+    <span class="n">t716</span> <span class="o">=</span> <span class="n">t376</span> <span class="o">*</span> <span class="n">t186</span> <span class="o">*</span> <span class="n">t86</span> <span class="o">*</span> <span class="n">t86</span>
+
+    <span class="n">e</span> <span class="o">=</span> <span class="n">c1</span> <span class="o">*</span> <span class="n">t26</span> <span class="o">+</span> <span class="n">c2</span> <span class="o">*</span> <span class="n">t46</span> <span class="o">+</span> <span class="n">c3</span> <span class="o">*</span> <span class="n">t86</span> <span class="o">+</span> <span class="n">c4</span> <span class="o">*</span> <span class="n">t186</span> <span class="o">+</span> <span class="n">c5</span> <span class="o">*</span> <span class="n">t376</span> <span class="o">+</span> <span class="n">c6</span> <span class="o">*</span> <span class="n">t716</span>
+    <span class="k">return</span> <span class="n">rho_c</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">e</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, George Trojan.
+      <span class="lastupdated">
+        Last updated on 2021-08-24.
+      </span>
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

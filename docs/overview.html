@@ -1,0 +1,316 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Overview &mdash; pyiapws95 0.1 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Installation" href="installation.html" />
+    <link rel="prev" title="pyiapws95" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> pyiapws95
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Overview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#examples">Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="whats-new.html">What’s New</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">pyiapws95</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Overview</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/overview.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <section id="overview">
+<h1>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h1>
+<p><strong>pyiapws95</strong> provides two top-level functions: <cite>water_props</cite> and <cite>saturation_props</cite>.
+The former returns single-state water or gas properties:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">temperature</span> <span class="p">[</span><span class="n">K</span><span class="p">]</span>
+<span class="n">pressure</span> <span class="p">[</span><span class="n">Pa</span><span class="p">]</span>
+<span class="n">density</span> <span class="p">[</span><span class="n">kg</span> <span class="n">m</span><span class="o">^-</span><span class="mi">3</span><span class="p">]</span>
+<span class="n">entropy</span> <span class="p">[</span><span class="n">Joule</span> <span class="n">kg</span><span class="o">^-</span><span class="mi">1</span> <span class="n">K</span><span class="o">^-</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">internal_energy</span> <span class="p">[</span><span class="n">Joule</span> <span class="n">kg</span><span class="o">^-</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">enthalpy</span> <span class="p">[</span><span class="n">Joule</span> <span class="n">kg</span><span class="o">^-</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">gibbs_free_energy</span> <span class="p">[</span><span class="n">Joule</span> <span class="n">kg</span><span class="o">^-</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">isochoric_heat_capacity</span> <span class="p">[</span><span class="n">Joule</span> <span class="n">kg</span><span class="o">^-</span><span class="mi">1</span> <span class="n">K</span><span class="o">^-</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">isobaric_heat_capacity</span> <span class="p">[</span><span class="n">Joule</span> <span class="n">kg</span><span class="o">^-</span><span class="mi">1</span> <span class="n">K</span><span class="o">^-</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">speed_of_sound</span> <span class="p">[</span><span class="n">m</span> <span class="n">s</span><span class="o">^-</span><span class="mi">1</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>The latter returns a tuple of above properties for liquid and vapour phases.
+Input parameters should be in SI units. When <cite>pint</cite> is available, <cite>pint.Quantity</cite>
+can be passed as well. Output is always in SI units, either as <cite>pint.Quantity</cite>
+values when an input parameter <cite>units</cite> is set (it is set by default), ot plain
+floats.</p>
+<section id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
+<p>Compute thermodynamic water properties for pressure 100 000 Pa and temperature
+280 deg K.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">pyiapws95</span> <span class="k">as</span> <span class="nn">wp</span>  <span class="c1"># Wagner and Pruss</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">wp</span><span class="o">.</span><span class="n">water_props</span><span class="p">(</span><span class="mf">1e5</span><span class="p">,</span> <span class="mi">280</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="go">WaterProps(</span>
+<span class="go">  temperature = 280.0 kelvin</span>
+<span class="go">  pressure = 100000.0 pascal</span>
+<span class="go">  density = 999.9103569375845 kilogram / meter ** 3</span>
+<span class="go">  entropy = 104.11392202805507 joule / kelvin / kilogram</span>
+<span class="go">  internal_energy = 28794.08780871546 joule / kilogram</span>
+<span class="go">  enthalpy = 28894.09677381184 joule / kilogram</span>
+<span class="go">  gibbs_free_energy = -257.8013940435776 joule / kilogram</span>
+<span class="go">  isochoric_heat_capacity = 4199.837682609676 joule / kelvin / kilogram</span>
+<span class="go">  isobaric_heat_capacity = 4200.944742530026 joule / kelvin / kilogram</span>
+<span class="go">  speed_of_sound = 1434.2746295730974 meter / second</span>
+<span class="go">)</span>
+</pre></div>
+</div>
+<p>Compute saturation properties for temperature 30 deg C:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">pyiapws95</span> <span class="k">as</span> <span class="nn">wp</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pint</span> <span class="kn">import</span> <span class="n">UnitRegistry</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ur</span> <span class="o">=</span> <span class="n">UnitRegistry</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">ur</span><span class="o">.</span><span class="n">Quantity</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="n">ur</span><span class="o">.</span><span class="n">celsius</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">wp</span><span class="o">.</span><span class="n">saturation_props</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="go">Liquid WaterProps(</span>
+<span class="go">  temperature = 280.0</span>
+<span class="go">  pressure = 991.8203199195548</span>
+<span class="go">  density = 999.862210022028</span>
+<span class="go">  entropy = 104.11824993199234</span>
+<span class="go">  internal_energy = 28795.297190165784</span>
+<span class="go">  enthalpy = 28796.28914716716</span>
+<span class="go">  gibbs_free_energy = -356.82083379069445</span>
+<span class="go">  isochoric_heat_capacity = 4200.257591191563</span>
+<span class="go">  isobaric_heat_capacity = 4201.350463857432</span>
+<span class="go">  speed_of_sound = 1434.1151160257625</span>
+<span class="go">)</span>
+<span class="go">Vapour WaterProps(</span>
+<span class="go">  temperature = 280.0</span>
+<span class="go">  pressure = 991.8203199195548</span>
+<span class="go">  density = 0.007681162498197408</span>
+<span class="go">  entropy = 8977.875870567612</span>
+<span class="go">  internal_energy = 2384324.697167183</span>
+<span class="go">  enthalpy = 2513448.422925141</span>
+<span class="go">  gibbs_free_energy = -356.820833790116</span>
+<span class="go">  isochoric_heat_capacity = 1424.168493620011</span>
+<span class="go">  isobaric_heat_capacity = 1891.341041100502</span>
+<span class="go">  speed_of_sound = 413.9245165642786</span>
+<span class="go">)</span>
+</pre></div>
+</div>
+<p>When speed is an issue, unit processing can be turned off.
+Performance gain is substantial:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">pyiapws95</span> <span class="k">as</span> <span class="nn">wp</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="o">%</span><span class="n">timeit</span> <span class="n">wp</span><span class="o">.</span><span class="n">water_props</span><span class="p">(</span><span class="mf">1e5</span><span class="p">,</span> <span class="mi">280</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="o">%</span><span class="n">timeit</span> <span class="n">wp</span><span class="o">.</span><span class="n">water_props</span><span class="p">(</span><span class="mf">1e5</span><span class="p">,</span> <span class="mi">280</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="go">310 µs ± 2.14 µs per loop (mean ± std. dev. of 7 runs, 1000 loops each)</span>
+<span class="go">28.5 µs ± 160 ns per loop (mean ± std. dev. of 7 runs, 10000 loops each)</span>
+</pre></div>
+</div>
+<p>The times in this example are for environment with numba installed. Without numba,
+performance drops significantly:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">pyiapws95</span> <span class="k">as</span> <span class="nn">wp</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="o">%</span><span class="n">timeit</span> <span class="n">wp</span><span class="o">.</span><span class="n">water_props</span><span class="p">(</span><span class="mf">1e5</span><span class="p">,</span> <span class="mi">280</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="go">6.37 ms ± 569 µs per loop (mean ± std. dev. of 7 runs, 1 loop each)</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="installation.html" class="btn btn-neutral float-right" title="Installation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="index.html" class="btn btn-neutral float-left" title="pyiapws95" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, George Trojan.
+      <span class="lastupdated">
+        Last updated on 2021-08-24.
+      </span>
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

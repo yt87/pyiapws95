@@ -1,12 +1,12 @@
 pyiapws95
 =========
 
-**pyiapws95** is a Python implementation of the
+pyiapws95 is a Python implementation of the
 `IAPWS formulation 1995  <https://aip.scitation.org/doi/10.1063/1.1461829>`_
 for the thermodynamic properties of water. The code is based on a C++ library
 `Fluidika <https://phoenix.yizimg.com/reaktoro/fluidika>`_.
 
-The package provides two top-level functions: `water_props` and `saturation_props`.
+The package provides two top-level functions: *water_props* and *saturation_props*.
 The former returns single-state water or gas properties::
 
   temperature [K]
@@ -25,16 +25,16 @@ The latter returns a tuple of above properties for liquid and vapour phases.
 Quick Start
 -----------
 
-The only required dependency is `numpy`. Substantially better performance one can
-obtain by installing `numba`. `Pint` simplifies unit handling.
+The only required dependency is numpy. Substantially better performance one can
+obtain by installing numba. Pint simplifies unit handling.
 
-The easiest way to try **pyiapws95** is to install it with conda in a separate
+The easiest way to try pyiapws95 is to install it with conda in a separate
 environment::
 
   $ conda create -n pyiapws95 -c yt87 python=3.9 numpy numba pint pyiapws95
 
 Then one can obtain thermodynamic properties of water at the sea level and room
-temprerature as follows:
+temperature as follows:
 
 .. code-block:: python
 
@@ -63,5 +63,5 @@ HTML documentation is available at https://yt87.github.io/pyiapws95/
 
 License
 -------
-**pyiapws95** is is released under
+pyiapws95 is is released under
 `MIT Licence <https://choosealicense.com/licenses/mit>`__.
