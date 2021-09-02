@@ -25,12 +25,12 @@ metadata = dict(
     author_email='george.trojan@gmail.com',
     license='BSD-0-Clause',
     url="https://github.com/yt87/pyiapws95",
-    install_requires=["numpy>=1.18"],
+    install_requires=["numpy>=1.19"],
     extras_require={"pint": "pint>=0.10", "numba": "numba>=0.48"},
     classifiers=CLASSIFIERS,
     test_suite="tests",
     tests_require=["pytest"],
-    zip_safe="True",
+    zip_safe=True,
     )
 
 setup(**metadata)
