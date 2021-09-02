@@ -18,11 +18,15 @@ Prerequisites
 Instructions
 ------------
 
-From source::
+From source:
 
-  $ python setup.py install
-  $ pytest tests
+.. parsed-literal::
 
-With conda::
+   $ python setup.py install
+   $ pytest tests
 
-  $ conda install -c yt87 pyiapws95
+With conda:
+
+.. parsed-literal::
+
+   $ conda install -c yt87 pyiapws95
