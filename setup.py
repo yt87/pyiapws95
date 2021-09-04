@@ -2,7 +2,7 @@
 setup.py for pyiapws95
 '''
 
-from setuptools import setup
+from setuptools import setup, find_packages
 import versioneer
 
 CLASSIFIERS = [
@@ -19,7 +19,6 @@ CLASSIFIERS = [
 metadata = dict(
     name="pyiapws95",
     version=versioneer.get_version(),
-    cmdclass=versioneer.get_cmdclass(),
     description="Python package to compute thermodynamic properties of water.",
     author='George Trojan',
     author_email='george.trojan@gmail.com',
@@ -28,6 +27,7 @@ metadata = dict(
     install_requires=["numpy>=1.19"],
     extras_require={"pint": "pint>=0.10", "numba": "numba>=0.48"},
     classifiers=CLASSIFIERS,
+    packages=find_packages(),
     test_suite="tests",
     tests_require=["pytest"],
     zip_safe=True,
