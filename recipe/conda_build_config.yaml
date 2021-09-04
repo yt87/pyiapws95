@@ -1,0 +1,6 @@
+python:
+  - 3.8.* *_cpython
+  - 3.9.* *_cpython
+
+numpy:
+  - 1.19
