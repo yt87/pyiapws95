@@ -25,7 +25,8 @@ except ImportError:
     _units = None
 
 from . import _version
-__version__ = _version.get_versions()['version']
+
+__version__ = _version.get_versions()["version"]
 
 from . import wagner, tables
 
@@ -94,7 +95,7 @@ def water_props(pressure, temperature, density=None, units=True):
     See Also
     --------
     saturation_props : Return water properties at saturation.
-        
+
     Examples
     --------
     >>> water_props(1e5, 280)
@@ -162,7 +163,7 @@ def saturation_props(temperature, units=True):
     See Also
     --------
     water_props : Return water properties for single phase.
-        
+
     Examples
     --------
     >>> saturation_props(280, units=False)
