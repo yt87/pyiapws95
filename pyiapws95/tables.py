@@ -1,5 +1,9 @@
 import numpy as np
-from numba import njit
+
+try:
+    from numba import njit
+except ImportError:
+    njit = lambda x: x
 
 Table13_1_cols = ["T", "p", "rho", "h", "s", "cp_v", "cp_p", "w"]
 
