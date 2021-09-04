@@ -4,11 +4,7 @@
 from typing import Tuple, Union
 import numpy as np
 
-try:
-    # raise ImportError
-    from numba import njit
-except ImportError:
-    njit = lambda x: x
+from . import njit
 
 # Formulas 6.1 - 6.3
 T_c = 647.096  # [K]

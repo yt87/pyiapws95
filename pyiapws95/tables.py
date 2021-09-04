@@ -1,5 +1,6 @@
 import numpy as np
-from numba import njit
+
+from . import njit
 
 Table13_1_cols = ["T", "p", "rho", "h", "s", "cp_v", "cp_p", "w"]
 

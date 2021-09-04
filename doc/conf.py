@@ -22,7 +22,7 @@ copyright = '2021, George Trojan'
 author = 'George Trojan'
 
 # The full version, including alpha/beta/rc tags
-release = '0.1'
+release = '0.1.1'
 today_fmt = '%Y-%m-%d'
 
 # -- General configuration ---------------------------------------------------
@@ -35,12 +35,9 @@ extensions = [
     'sphinx.ext.autosummary',
     'sphinx.ext.intersphinx',
     'sphinx.ext.extlinks',
-    'sphinx.ext.mathjax',
+    # 'sphinx.ext.mathjax',
     'sphinx.ext.napoleon',
-#    "nbsphinx",
     "numpydoc",
-    # 'IPython.sphinxext.ipython_directive',
-    # 'IPython.sphinxext.ipython_console_highlighting',
     'sphinx.ext.viewcode',
     'sphinxcontrib.programoutput',
 ]

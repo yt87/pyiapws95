@@ -1,6 +1,11 @@
 from typing import Iterable, List, NamedTuple, Union
 
 try:
+    from numba import njit
+except ImportError:
+    njit = lambda x: x
+
+try:
     from pint import UnitRegistry, Quantity
 
     _r = UnitRegistry()
