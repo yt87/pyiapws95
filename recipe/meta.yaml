@@ -1,19 +1,10 @@
 {% set name = "pyiapws95" %}
-<<<<<<< HEAD
 {% set version = "0.1.1" %}
-=======
-{% set version = "0.1.0" %}
->>>>>>> 598d3640742d6419709c612ae9a67d06924f148e
 {% set build_number = 1 %}
 
 package:
   name: {{ name|lower }}
   version: {{ version }}
-<<<<<<< HEAD
-=======
-  # name: "pyiapws95"
-  # version: "0.1.0"
->>>>>>> 598d3640742d6419709c612ae9a67d06924f148e
 
 source:
   git_url: {{ "https://github.com/yt87/pyiapws95.git" }}

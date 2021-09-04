@@ -1,13 +1,6 @@
 import numpy as np
 
-<<<<<<< HEAD
 from . import njit
-=======
-try:
-    from numba import njit
-except ImportError:
-    njit = lambda x: x
->>>>>>> 598d3640742d6419709c612ae9a67d06924f148e
 
 Table13_1_cols = ["T", "p", "rho", "h", "s", "cp_v", "cp_p", "w"]
 
