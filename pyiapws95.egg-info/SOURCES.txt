@@ -1,5 +1,0 @@
-setup.py
-pyiapws95.egg-info/PKG-INFO
-pyiapws95.egg-info/SOURCES.txt
-pyiapws95.egg-info/dependency_links.txt
-pyiapws95.egg-info/top_level.txt
